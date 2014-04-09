@@ -12,7 +12,11 @@ def nice
 end
 
 def tip(tippet, tipper, id, amount)
-	$db.execute("INSERT INTO ryan (id) VALUES (?)", id)
+	begin
+		$db.execute("INSERT INTO ryan (id) VALUES (?)", id)
+	rescue => e
+		puts e
+	end
 	puts "tipping"
 	puts "tipper: " << tipper
 	puts "tippet: " << tippet
@@ -20,7 +24,12 @@ def tip(tippet, tipper, id, amount)
 	id = "t1_" << id
 	puts "amount ryan: " << amount[0]
 	text = "[✓] Accepted: #{tipper} → #{amount[0]} ryan (R#{amount[0]} ryan ryancoins) → #{tippet}"
-	$ryan.comment(text, id)
+	begin
+		$ryan.comment(text, id)
+	rescue => e
+		puts "there was an issue posting the comment, re-trying"
+		tip(tippet, tipper, id, amount)
+	end
 	nice
 	puts "sending PM"
 	$ryan.send_pm tippet, "YOU GOT TIPPED #{amount} RYAN COINS!", "YAY FOR YOU!"
@@ -31,7 +40,7 @@ def connection
 	puts "connection problems, polling reddit"
 	begin
 		$ryan.me
-	rescue Exception => e
+	rescue => e
 		puts e
 		puts "sleeping for 10"
 		sleep 10
@@ -41,17 +50,27 @@ end
 
 begin
 	$ryan = Snoo::Client.new({:user_agent => "RYANBOT by /u/hansolo669", :username => "ryantipbot", :password => ""})
-rescue Exception => e
+rescue => e
 	puts e
 end
 
 def tipbot
 	while true
 		begin
-			comments = $ryan.get_comments({:subreddit =>'CrispyPops+mcham'})
+			comments = $ryan.get_comments({:subreddit =>'all'})
+			if comments["error"]
+				puts comments["error"]
+				puts "there was an error not caught(404 504), re-trying connection"
+				connection
+			end
+			if comments.empty?
+				puts "couldnt get comments for some reason"
+				puts "restarting loop"
+				tipbot
+			end
 			$ryan.me
 			comments = comments["data"]["children"]
-		rescue Exception => e
+		rescue => e
 			puts e
 			connection
 		end

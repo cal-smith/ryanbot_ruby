@@ -1,6 +1,9 @@
 # encoding: utf-8
 require 'snoo'
 require 'sqlite3'
+require 'logger'
+
+$log = Logger.new('ryan.log', 20, 'daily')
 
 $db = SQLite3::Database.new( "ryan.db" )
 
@@ -49,7 +52,7 @@ def connection
 end
 
 begin
-	$ryan = Snoo::Client.new({:user_agent => "RYANBOT for /r/all by /u/hansolo669", :username => "ryantipbot", :password => ""})
+	$ryan = Snoo::Client.new({:user_agent => "RYANBOT2 for /r/all by /u/hansolo669", :username => "ryantipbot", :password => ""})
 rescue => e
 	puts e
 end

@@ -1,6 +1,9 @@
 # encoding: utf-8
 require 'snoo'
 require 'sqlite3'
+require 'logger'
+
+$log = Logger.new('ryan.log', 20, 'daily')
 
 $db = SQLite3::Database.new( "ryan.db" )
 
@@ -26,14 +29,14 @@ def tip(tippet, tipper, id, amount)
 	text = "[✓] Accepted: #{tipper} → #{amount[0]} ryan (R#{amount[0]} ryan ryancoins) → #{tippet}"
 	begin
 		$ryan.comment(text, id)
+		nice
+		puts "sending PM"
+		$ryan.send_pm tippet, "YOU GOT TIPPED #{amount} RYAN COINS!", "YAY FOR YOU!"
+		nice
 	rescue => e
 		puts "there was an issue posting the comment, re-trying"
 		tip(tippet, tipper, id, amount)
 	end
-	nice
-	puts "sending PM"
-	$ryan.send_pm tippet, "YOU GOT TIPPED #{amount} RYAN COINS!", "YAY FOR YOU!"
-	nice
 end
 
 def connection
@@ -49,7 +52,7 @@ def connection
 end
 
 begin
-	$ryan = Snoo::Client.new({:user_agent => "RYANBOT by /u/hansolo669", :username => "ryantipbot", :password => ""})
+	$ryan = Snoo::Client.new({:user_agent => "RYANBOT2 by /u/hansolo669", :username => "ryantipbot", :password => ""})
 rescue => e
 	puts e
 end
@@ -57,16 +60,11 @@ end
 def tipbot
 	while true
 		begin
-			comments = $ryan.get_comments({:subreddit =>'all'})
+			comments = $ryan.get_comments({:subreddit =>'CrispyPops+mcham'})
 			if comments["error"]
 				puts comments["error"]
 				puts "there was an error not caught(404 504), re-trying connection"
 				connection
-			end
-			if comments.empty?
-				puts "couldnt get comments for some reason"
-				puts "restarting loop"
-				tipbot
 			end
 			$ryan.me
 			comments = comments["data"]["children"]
@@ -75,6 +73,10 @@ def tipbot
 			connection
 		end
 		nice
+		if comments.empty?
+			puts "couldnt get comments for some reason"
+			connection
+		end
 		comments.each do |comment|
 			if /\/u\/ryantipbot/i.match(comment["data"]["body"])
 				puts "potential tipper: " << comment["data"]["author"]

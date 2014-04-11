@@ -2,6 +2,11 @@
 require 'snoo'
 require 'sqlite3'
 require 'logger'
+require 'json'
+
+config = File.read("config.json")
+config = JSON.parse(config)
+pass = config["pass"]
 
 $log = Logger.new('ryan.log', 20, 'daily')
 
@@ -12,6 +17,11 @@ $db.execute("CREATE TABLE IF NOT EXISTS ryan ( id VARCHAR(255) PRIMARY KEY);")
 def nice
 	puts "sleeping for 4 seconds"
 	sleep 4
+end
+
+def comment_retry(tippet, tipper, id, amount)
+	#yeah honestly, I dont like it either, but its gest the job done with a minimum of fuss
+	tip(tippet, tipper, id, amount)
 end
 
 def tip(tippet, tipper, id, amount)
@@ -34,13 +44,15 @@ def tip(tippet, tipper, id, amount)
 		$ryan.send_pm tippet, "YOU GOT TIPPED #{amount} RYAN COINS!", "YAY FOR YOU!"
 		nice
 	rescue => e
+		$log.error("there was an issue posting the comment #{e}")
 		puts "there was an issue posting the comment, re-trying"
-		tip(tippet, tipper, id, amount)
+		comment_retry(tippet, tipper, id, amount)
 	end
 end
 
 def connection
 	puts "connection problems, polling reddit"
+	$log.debug "connection problems, polling reddit"
 	begin
 		$ryan.me
 	rescue => e
@@ -52,8 +64,9 @@ def connection
 end
 
 begin
-	$ryan = Snoo::Client.new({:user_agent => "RYANBOT2 by /u/hansolo669", :username => "ryantipbot", :password => ""})
+	$ryan = Snoo::Client.new({:user_agent => "RYANBOT2 by /u/hansolo669", :username => "ryantipbot", :password => pass})
 rescue => e
+	$log.error("issue logging in #{e}")
 	puts e
 end
 
@@ -69,11 +82,13 @@ def tipbot
 			$ryan.me
 			comments = comments["data"]["children"]
 		rescue => e
+			$log.error("issue with getting comments #{e}")
 			puts e
 			connection
 		end
 		nice
 		if comments.empty?
+			$log.error("comments are empty")
 			puts "couldnt get comments for some reason"
 			connection
 		end

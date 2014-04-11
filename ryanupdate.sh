@@ -9,5 +9,5 @@ curl https://raw.githubusercontent.com/hansolo669/ryanbot_ruby/master/ryanbot2.r
 curl https://raw.githubusercontent.com/hansolo669/ryanbot_ruby/master/ryanbot2all.rb -o ryanbot2all.rb
 
 #bootem!
-screen -dmS ryan ruby ryanbot2.rb
-screen -dmS ryanall ruby ryanbot2all.rb
+ruby ryanbot2.rb &
+ruby ryanbot2all.rb &

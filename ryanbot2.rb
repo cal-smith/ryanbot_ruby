@@ -19,11 +19,6 @@ def nice
 	sleep 4
 end
 
-def comment_retry(tippet, tipper, id, amount)
-	#yeah honestly, I dont like it either, but its gest the job done with a minimum of fuss
-	tip(tippet, tipper, id, amount)
-end
-
 def tip(tippet, tipper, id, amount)
 	begin
 		$db.execute("INSERT INTO ryan (id) VALUES (?)", id)
@@ -46,7 +41,7 @@ def tip(tippet, tipper, id, amount)
 	rescue => e
 		$log.error("there was an issue posting the comment #{e}")
 		puts "there was an issue posting the comment, re-trying"
-		comment_retry(tippet, tipper, id, amount)
+		tip(tippet, tipper, id, amount)
 	end
 end
 
@@ -92,39 +87,44 @@ def tipbot
 			puts "couldnt get comments for some reason"
 			connection
 		end
-		comments.each do |comment|
-			if /\/u\/ryantipbot/i.match(comment["data"]["body"])
-				puts "potential tipper: " << comment["data"]["author"]
-				id = comment["data"]["id"]
-				findid = $db.execute("SELECT * FROM ryan WHERE id = ?", id)
-				if findid.empty?
-					tipper = comment["data"]["author"]
-					amount = comment["data"]["body"]
-					amount = /\d+ ryan/i.match(amount)
-					amount = amount[0].match(/\d+/)
-					puts amount
-					link = comment["data"]["link_id"]
-					link[0..2] = ''
-					puts "link: " << link
-					parent = comment["data"]["parent_id"]
-					parent[0..2] = ''
-					puts "parent: " << parent
-					puts "now to get comments"
-					comments = $ryan.get_comments({:subreddit => 'CrispyPops+mcham', :link_id => link, :comment_id => parent})
-					if link == parent
-						puts "link/selfpost"
-						tippet = comment["data"]["link_author"]
-						tip(tippet, tipper, id, amount)
+		begin
+			comments.each do |comment|
+				if /\/u\/ryantipbot/i.match(comment["data"]["body"])
+					puts "potential tipper: " << comment["data"]["author"]
+					id = comment["data"]["id"]
+					findid = $db.execute("SELECT * FROM ryan WHERE id = ?", id)
+					if findid.empty?
+						tipper = comment["data"]["author"]
+						amount = comment["data"]["body"]
+						amount = /\d+ ryan/i.match(amount)
+						amount = amount[0].match(/\d+/)
+						puts amount
+						link = comment["data"]["link_id"]
+						link[0..2] = ''
+						puts "link: " << link
+						parent = comment["data"]["parent_id"]
+						parent[0..2] = ''
+						puts "parent: " << parent
+						puts "now to get comments"
+						comments = $ryan.get_comments({:subreddit => 'CrispyPops+mcham', :link_id => link, :comment_id => parent})
+						if link == parent
+							puts "link/selfpost"
+							tippet = comment["data"]["link_author"]
+							tip(tippet, tipper, id, amount)
+						else
+							puts "pulling that comment author"
+							tippet = comments[1]["data"]["children"][0]["data"]["author"]
+							puts tippet
+							tip(tippet, tipper, id, amount)
+						end
 					else
-						puts "pulling that comment author"
-						tippet = comments[1]["data"]["children"][0]["data"]["author"]
-						puts tippet
-						tip(tippet, tipper, id, amount)
+						puts "skip!"
 					end
-				else
-					puts "skip!"
 				end
 			end
+		rescue Exception => e
+			$log.error(e)
+			raise e
 		end
 	end
 end

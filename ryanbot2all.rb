@@ -7,7 +7,7 @@ config = File.read("config.json")
 config = JSON.parse(config)
 pass = config["pass"]
 
-$log = Logger.new('ryan.log', 20, 'daily')
+$log = Logger.new('ryanall.log', 20, 'daily')
 
 $db = SQLite3::Database.new( "ryan.db" )
 

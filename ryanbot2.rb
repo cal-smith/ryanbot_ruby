@@ -6,7 +6,7 @@ require 'json'
 
 config = File.read("config.json")
 config = JSON.parse(config)
-pass = config["pass"]
+$pass = config["pass"]
 
 $log = Logger.new('ryan.log', 20, 'daily')
 
@@ -61,7 +61,7 @@ end
 def login
 	puts "logging in/re-auth"
 	begin
-		$ryan = Snoo::Client.new({:user_agent => "RYANBOT2 by /u/hansolo669", :username => "ryantipbot", :password => pass})
+		$ryan = Snoo::Client.new({:user_agent => "RYANBOT2 by /u/hansolo669", :username => "ryantipbot", :password => $pass})
 	rescue => e
 		$log.error("issue logging in #{e}")
 		puts e

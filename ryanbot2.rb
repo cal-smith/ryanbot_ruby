@@ -58,15 +58,20 @@ def connection
 	end
 end
 
-begin
-	$ryan = Snoo::Client.new({:user_agent => "RYANBOT2 by /u/hansolo669", :username => "ryantipbot", :password => pass})
-rescue => e
-	$log.error("issue logging in #{e}")
-	puts e
+def login
+	puts "logging in/re-auth"
+	begin
+		$ryan = Snoo::Client.new({:user_agent => "RYANBOT2 by /u/hansolo669", :username => "ryantipbot", :password => pass})
+	rescue => e
+		$log.error("issue logging in #{e}")
+		puts e
+	end
 end
 
 def tipbot
 	while true
+		login
+		nice
 		begin
 			comments = $ryan.get_comments({:subreddit =>'CrispyPops+mcham'})
 			if comments["error"]
@@ -123,10 +128,11 @@ def tipbot
 				end
 			end
 		rescue Exception => e
-			$log.error(e)
-			raise e
+			$log.error("died with #{e}")
 		end
 	end
 end
+
+login
 
 tipbot

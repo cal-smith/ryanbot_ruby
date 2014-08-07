@@ -13,11 +13,12 @@ $log = Logger.new('ryan.log', 20, 'daily')
 $db = SQLite3::Database.new( "ryan.db" )
 
 $db.execute("CREATE TABLE IF NOT EXISTS ryan ( id VARCHAR(255) PRIMARY KEY);")
+$db.execute("CREATE TABLE IF NOT EXISTS tip_total ( id VARCHAR(255) PRIMARY KEY, balance);")
 
 def nice
 	puts "sleeping for 4 seconds"
 	sleep 4
-end
+end 
 
 def tip(tippet, tipper, id, amount)
 	begin
@@ -43,6 +44,9 @@ def tip(tippet, tipper, id, amount)
 		puts "there was an issue posting the comment, re-trying"
 		tip(tippet, tipper, id, amount)
 	end
+end
+
+def tip_total
 end
 
 def connection
@@ -132,6 +136,8 @@ def tipbot
 		end
 	end
 end
+
+
 
 login
 

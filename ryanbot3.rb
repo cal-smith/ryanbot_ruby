@@ -22,7 +22,7 @@ $db.execute("CREATE TABLE IF NOT EXISTS tip_total ( id VARCHAR(255) PRIMARY KEY,
 ryan = Redd::Client::Unauthenticated.new.login "ryantipbot", $pass, nil, {:user_agent => "RYANBOT3 by /u/hansolo669"}
 $log.info "logged in"
 $log.info "#{ryan.inspect}"
-subreddit = "hansolo669"
+subreddit = config["sub"]
 begin
 	ryan.comment_stream subreddit do |comment|
 		if /\/u\/ryantipbot/i.match(comment.body)

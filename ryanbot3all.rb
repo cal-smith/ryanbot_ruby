@@ -34,6 +34,10 @@ begin
 				if findid.empty?
 					tipper = comment.author
 					tippet = comment.attributes[:link_author]
+					unless comment.root?
+						parent_comment = ryan.get_info({:id => parent_id})
+						tippet = parent_comment.things[0].author
+					end
 					amount = comment.body
 					amount = /\d+ ryan/i.match(amount)
 					unless amount == nil

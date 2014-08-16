@@ -22,9 +22,9 @@ $db.execute("CREATE TABLE IF NOT EXISTS tip_total ( id VARCHAR(255) PRIMARY KEY,
 ryan = Redd::Client::Unauthenticated.new.login "ryantipbot", $pass, nil, {:user_agent => "RYANBOT3 by /u/hansolo669"}
 $log.info "logged in"
 $log.info "#{ryan.inspect}"
-
+subreddit = "hansolo669"
 begin
-	ryan.comment_stream "CrispyPops" do |comment|
+	ryan.comment_stream subreddit do |comment|
 		if /\/u\/ryantipbot/i.match(comment.body)
 			puts "potential tipper: " << comment.author
 			$log.info "potential tipper #{comment.author.dump}"
@@ -32,7 +32,13 @@ begin
 			findid = $db.execute("SELECT * FROM ryan WHERE id = ?", id)
 			if findid.empty?
 				tipper = comment.author
+				parent_id = comment.parent_id
+				link_id = comment.link_id
 				tippet = comment.attributes[:link_author]
+				unless comment.root?
+					parent_comment = ryan.get_info({:id => parent_id})
+					tippet = parent_comment.things[0].author
+				end
 				amount = comment.body
 				amount = /\d+ ryan/i.match(amount)
 				unless amount == nil

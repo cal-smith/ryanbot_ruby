@@ -23,33 +23,44 @@ ryan = Redd::Client::Unauthenticated.new.login "ryantipbot", $pass, nil, {:user_
 $log.info "logged in"
 $log.info "#{ryan.inspect}"
 
-ryan.comment_stream "hansolo669" do |comment|
-	if /\/u\/ryantipbot/i.match(comment.body)
-		puts "potential tipper: " << comment.author
-		$log.info "potential tipper #{comment.author.dump}"
-		id = comment.id
-		findid = $db.execute("SELECT * FROM ryan WHERE id = ?", id)
-		if findid.empty?
-			tipper = comment.author
-			tippet = comment.attributes[:link_author]
-			amount = comment.body
-			amount = /\d+ ryan/i.match(amount)
-			unless amount == nil
-				amount = amount[0].match(/\d+/)
-				puts "replying and PMing"
-				$log.info "reply and PMing"
-				comment.reply "[✓] Accepted: #{tipper} → #{amount[0]} ryan (R#{amount[0]} ryan ryancoins) → #{tippet}"
-				ryan.compose_message tippet, "YOU GOT TIPPED #{amount} RYAN COINS!", "YAY FOR YOU!"
-				begin
-					$db.execute("INSERT INTO ryan (id) VALUES (?)", id)
-				rescue => e
-					puts e
-					$log.error "DB error #{e}"
+begin
+	ryan.comment_stream "CrispyPops" do |comment|
+		if /\/u\/ryantipbot/i.match(comment.body)
+			puts "potential tipper: " << comment.author
+			$log.info "potential tipper #{comment.author.dump}"
+			id = comment.id
+			findid = $db.execute("SELECT * FROM ryan WHERE id = ?", id)
+			if findid.empty?
+				tipper = comment.author
+				tippet = comment.attributes[:link_author]
+				amount = comment.body
+				amount = /\d+ ryan/i.match(amount)
+				unless amount == nil
+					amount = amount[0].match(/\d+/)
+					puts "replying and PMing"
+					$log.info "reply and PMing"
+					comment.reply "[✓] Accepted: #{tipper} → #{amount[0]} ryan (R#{amount[0]} ryan ryancoins) → #{tippet}"
+					ryan.compose_message tippet, "YOU GOT TIPPED #{amount} RYAN COINS!", "YAY FOR YOU!"
+					begin
+						$db.execute("INSERT INTO ryan (id) VALUES (?)", id)
+					rescue => e
+						puts e
+						$log.error "DB error #{e}"
+					end
 				end
+			else
+				puts "skip!"
+				$log.info "skip"
 			end
-		else
-			puts "skip!"
-			$log.info "skip"
 		end
 	end
+rescue Redd::Error::RateLimited => e
+	puts "rate limited"
+	$log.error "rate limited"
+	time_left = e.time
+	sleep(time_left)
+rescue Redd::Error => e
+	status = e.code
+	$log.error e
+	raise e unless (500...600).include?(status)
 end
